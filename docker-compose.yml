@@ -1,0 +1,62 @@
+version: '2'
+services:
+  api:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: api
+    container_name: api
+    ports:
+      - "9000:8080"
+  artifactory:
+    build:
+      context: tools/artifactory
+      dockerfile: Dockerfile
+    image: artifactory
+    container_name: artifactory
+    ports:
+      - "9001:8081"
+  docker-agent:
+    build:
+      context: tools/docker-agent
+      dockerfile: Dockerfile
+    container_name: docker-agent
+    image: docker-agent
+    ports:
+      - "22:22"
+    volumes:
+      - ./front/src/assets/conf:/etc/nginx/conf.d/
+    tty: true
+  jenkins:
+    build:
+      context: tools/jenkins
+      dockerfile: Dockerfile
+    container_name: jenkins
+    image: jenkins
+    ports:
+      - "9002:8080"
+    volumes:
+      - ./jenkins-data/:/var/jenkins_home
+    links:
+      - artifactory:artifactory
+      - docker-agent:docker-agent
+      - gitlab:gitlab
+      - sonar:sonar
+  gitlab:
+    build:
+      context: tools/gitlab
+      dockerfile: Dockerfile
+    container_name: gitlab
+    image: gitlab
+    ports:
+      - "9003:80"
+    volumes:
+      - ./gitlab-data/:/home/git/repositories
+  sonar:
+    build:
+      context: tools/sonar
+      dockerfile: Dockerfile
+    container_name: sonar
+    image: sonar
+    ports:
+      - "9004:9000"
